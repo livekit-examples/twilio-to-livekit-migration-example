@@ -1,7 +1,9 @@
-'use strict';
+// @ts-check
 
-const { addUrlParams, getUrlParams } = require('./browser');
-const getUserFriendlyError = require('./userfriendlyerror');
+"use strict";
+
+const { addUrlParams, getUrlParams } = require("./browser");
+const getUserFriendlyError = require("./userfriendlyerror");
 
 /**
  * Select your Room name and identity (screen name).
@@ -9,11 +11,11 @@ const getUserFriendlyError = require('./userfriendlyerror');
  * @param error - Error from the previous Room session, if any
  */
 function selectRoom($modal, error) {
-  const $alert = $('div.alert', $modal);
-  const $changeMedia = $('button.btn-dark', $modal);
-  const $identity = $('#screen-name', $modal);
-  const $join = $('button.btn-primary', $modal);
-  const $roomName = $('#room-name', $modal);
+  const $alert = $("div.alert", $modal);
+  const $changeMedia = $("button.btn-dark", $modal);
+  const $identity = $("#screen-name", $modal);
+  const $join = $("button.btn-primary", $modal);
+  const $roomName = $("#room-name", $modal);
 
   // If Room name is provided as a URL parameter, pre-populate the Room name field.
   const { roomName } = getUrlParams();
@@ -22,26 +24,28 @@ function selectRoom($modal, error) {
   }
 
   // If any previously saved user name exists, pre-populate the user name field.
-  const identity = localStorage.getItem('userName');
+  const identity = localStorage.getItem("userName");
   if (identity) {
     $identity.val(identity);
   }
 
   if (error) {
-    $alert.html(`<h5>${error.name}${error.message
-      ? `: ${error.message}`
-      : ''}</h5>${getUserFriendlyError(error)}`);
-    $alert.css('display', '');
+    $alert.html(
+      `<h5>${error.name}${
+        error.message ? `: ${error.message}` : ""
+      }</h5>${getUserFriendlyError(error)}`
+    );
+    $alert.css("display", "");
   } else {
-    $alert.css('display', 'none');
+    $alert.css("display", "none");
   }
 
-  return new Promise(resolve => {
-    $modal.on('shown.bs.modal', function onShow() {
-      $modal.off('shown.bs.modal', onShow);
+  return new Promise((resolve) => {
+    $modal.on("shown.bs.modal", function onShow() {
+      $modal.off("shown.bs.modal", onShow);
       $changeMedia.click(function onChangeMedia() {
-        $changeMedia.off('click', onChangeMedia);
-        $modal.modal('hide');
+        $changeMedia.off("click", onChangeMedia);
+        $modal.modal("hide");
         resolve(null);
       });
 
@@ -53,26 +57,26 @@ function selectRoom($modal, error) {
           addUrlParams({ roomName });
 
           // Save the user name.
-          localStorage.setItem('userName', identity);
+          localStorage.setItem("userName", identity);
 
-          $join.off('click', onJoin);
-          $modal.modal('hide');
+          $join.off("click", onJoin);
+          $modal.modal("hide");
         }
       });
     });
 
-    $modal.on('hidden.bs.modal', function onHide() {
-      $modal.off('hidden.bs.modal', onHide);
+    $modal.on("hidden.bs.modal", function onHide() {
+      $modal.off("hidden.bs.modal", onHide);
       const identity = $identity.val();
       const roomName = $roomName.val();
       resolve({ identity, roomName });
     });
 
     $modal.modal({
-      backdrop: 'static',
+      backdrop: "static",
       focus: true,
       keyboard: false,
-      show: true
+      show: true,
     });
   });
 }

@@ -1,6 +1,8 @@
-'use strict';
+// @ts-check
 
-const getUserFriendlyError = require('./userfriendlyerror');
+"use strict";
+
+const getUserFriendlyError = require("./userfriendlyerror");
 
 /**
  * Show the given error.
@@ -9,17 +11,17 @@ const getUserFriendlyError = require('./userfriendlyerror');
  */
 function showError($modal, error) {
   // Add the appropriate error message to the alert.
-  $('div.alert', $modal).html(getUserFriendlyError(error));
+  $("div.alert", $modal).html(getUserFriendlyError(error));
   $modal.modal({
-    backdrop: 'static',
+    backdrop: "static",
     focus: true,
     keyboard: false,
-    show: true
+    show: true,
   });
 
-  $('#show-error-label', $modal).text(`${error.name}${error.message
-    ? `: ${error.message}`
-    : ''}`);
+  $("#show-error-label", $modal).text(
+    `${error.name}${error.message ? `: ${error.message}` : ""}`
+  );
 }
 
 module.exports = showError;
