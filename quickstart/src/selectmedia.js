@@ -2,7 +2,7 @@
 
 "use strict";
 
-const { createLocalTracks } = require("livekit-client");
+const { createLocalTracks, Room } = require("livekit-client");
 
 const localTracks = {
   audio: null,
@@ -36,8 +36,7 @@ async function applyInputDevice(kind, deviceId, render) {
  * @returns {Promise<MediaDeviceInfo[]>} the list of media devices
  */
 async function getInputDevices(kind) {
-  const devices = await navigator.mediaDevices.enumerateDevices();
-  return devices.filter((device) => device.kind === `${kind}input`);
+  return Room.getLocalDevices(kind);
 }
 
 /**

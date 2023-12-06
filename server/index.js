@@ -81,11 +81,19 @@ app.get("/token", function (request, response) {
   /**
    * @type {import('livekit-server-sdk').VideoGrant}
    */
-  const grant = { canPublish: true, canSubscribe: true, canPublishData: true };
+  const grant = {
+    canPublish: true,
+    canSubscribe: true,
+    canPublishData: true,
+    roomJoin: true,
+    roomCreate: true,
+  };
   token.addGrant(grant);
-
-  // Serialize the token to a JWT string.
-  response.send({ token: token.toJwt(), livekitUrl: process.env.LIVEKIT_URL });
+  response.json({
+    // Serialize the token to a JWT string.
+    token: token.toJwt(),
+    livekitUrl: process.env.LIVEKIT_URL,
+  });
 });
 
 // Create http server and run it.
