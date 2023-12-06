@@ -1,14 +1,11 @@
 'use strict';
 
-const { Room, setLogLevel } = require('livekit-client');
-const { Track } = require('livekit-client');
+const { Room, Track, setLogLevel } = require('livekit-client');
+const { isMobile } = require('./browser');
 
 const $leave = $('#leave-room');
 const $room = $('#room');
-const $activeParticipant = $(
-  'div#active-participant > div.participant.main',
-  $room
-);
+const $activeParticipant = $('div#active-participant > div.participant.main', $room);
 const $activeVideo = $('video', $activeParticipant);
 const $participants = $('div#participants', $room);
 
@@ -30,8 +27,7 @@ function setActiveParticipant(participant) {
     $activeParticipant.removeClass('pinned');
 
     // Detach any existing VideoTrack of the active Participant.
-    const { track: activeTrack } =
-      Array.from(activeParticipant.videoTracks.values())[0] || {};
+    const { track: activeTrack } = Array.from(activeParticipant.videoTracks.values())[0] || {};
     if (activeTrack) {
       activeTrack.detach($activeVideo.get(0));
       $activeVideo.css('opacity', '0');
@@ -77,11 +73,8 @@ function setupParticipantContainer(participant, room) {
   const { identity, sid } = participant;
 
   // Add a container for the Participant's media.
-  const $container =
-    $(`<div class="participant" data-identity="${identity}" id="${sid}">
-    <audio autoplay ${
-      participant === room.localParticipant ? 'muted' : ''
-    } style="opacity: 0"></audio>
+  const $container = $(`<div class="participant" data-identity="${identity}" id="${sid}">
+    <audio autoplay ${participant === room.localParticipant ? 'muted' : ''} style="opacity: 0"></audio>
     <video autoplay muted playsinline style="opacity: 0"></video>
   </div>`);
 
@@ -238,7 +231,7 @@ async function joinRoom(url, token, connectOptions) {
   // Save the LocalVideoTrack.
   let localVideoTrack = room.localParticipant.getTrack(Track.Source.Camera);
 
-  // @ts-ignore Make the Room available in the JavaScript console for debugging.
+  // Make the Room available in the JavaScript console for debugging.
   window.room = room;
 
   // Handle the LocalParticipant's media.
@@ -283,7 +276,7 @@ async function joinRoom(url, token, connectOptions) {
     };
 
     room.once('disconnected', () => {
-      // @ts-ignore Clear the Room reference used for debugging from the JavaScript console.
+      // Clear the Room reference used for debugging from the JavaScript console.
       window.room = null;
 
       resolve(true);

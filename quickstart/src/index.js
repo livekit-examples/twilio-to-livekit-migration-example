@@ -78,7 +78,6 @@ async function selectAndJoinRoom(error = null) {
     // After the video session, display the room selection modal.
     return selectAndJoinRoom();
   } catch (error) {
-    console.error(error);
     return selectAndJoinRoom(error);
   }
 }
@@ -89,14 +88,10 @@ async function selectAndJoinRoom(error = null) {
 async function selectCamera() {
   if (deviceIds.video === null) {
     try {
-      deviceIds.video = await selectMedia(
-        'video',
-        $selectCameraModal,
-        videoTrack => {
+      deviceIds.video = await selectMedia('video', $selectCameraModal, videoTrack => {
           const $video = $('video', $selectCameraModal);
           videoTrack.attach($video.get(0));
-        }
-      );
+      });
     } catch (error) {
       showError($showErrorModal, error);
       return;
@@ -111,17 +106,11 @@ async function selectCamera() {
 async function selectMicrophone() {
   if (deviceIds.audio === null) {
     try {
-      deviceIds.audio = await selectMedia(
-        'audio',
-        $selectMicModal,
-        audioTrack => {
+      deviceIds.audio = await selectMedia('audio', $selectMicModal, audioTrack => {
           const $levelIndicator = $('svg rect', $selectMicModal);
           const maxLevel = Number($levelIndicator.attr('height'));
-          micLevel(audioTrack, maxLevel, level =>
-            $levelIndicator.attr('y', maxLevel - level)
-          );
-        }
-      );
+          micLevel(audioTrack, maxLevel, level => $levelIndicator.attr('y', maxLevel - level));
+      });
     } catch (error) {
       showError($showErrorModal, error);
       return;
