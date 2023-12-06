@@ -1,5 +1,3 @@
-// @ts-check
-
 "use strict";
 
 const { addUrlParams, getUrlParams } = require("./browser");

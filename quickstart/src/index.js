@@ -1,5 +1,3 @@
-// @ts-check
-
 "use strict";
 
 const { VideoPresets } = require("livekit-client");
@@ -49,7 +47,6 @@ const deviceIds = {
  * @param [error=null] - Error from the previous Room session, if any
  */
 async function selectAndJoinRoom(error = null) {
-  console.log("select and join room");
   const formData = await selectRoom($joinRoomModal, error);
   if (!formData) {
     // User wants to change the camera and microphone.
@@ -75,8 +72,6 @@ async function selectAndJoinRoom(error = null) {
     // Add the specified video device ID to ConnectOptions.
     options.videoCaptureDefaults = { deviceId: deviceIds.video };
 
-    console.log("joining room", { livekitUrl, token, options });
-
     // Join the Room.
     await joinRoom(livekitUrl, token, options);
 
@@ -92,8 +87,6 @@ async function selectAndJoinRoom(error = null) {
  * Select your camera.
  */
 async function selectCamera() {
-  console.log("select camera");
-
   if (deviceIds.video === null) {
     try {
       deviceIds.video = await selectMedia(
@@ -105,7 +98,6 @@ async function selectCamera() {
         }
       );
     } catch (error) {
-      console.log("error", error);
       showError($showErrorModal, error);
       return;
     }
@@ -117,7 +109,6 @@ async function selectCamera() {
  * Select your microphone.
  */
 async function selectMicrophone() {
-  console.log("select microphone");
   if (deviceIds.audio === null) {
     try {
       deviceIds.audio = await selectMedia(
@@ -132,8 +123,6 @@ async function selectMicrophone() {
         }
       );
     } catch (error) {
-      console.log("error", error);
-
       showError($showErrorModal, error);
       return;
     }

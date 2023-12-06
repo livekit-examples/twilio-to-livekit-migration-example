@@ -1,5 +1,3 @@
-// @ts-check
-
 "use strict";
 
 const USER_FRIENDLY_ERRORS = {

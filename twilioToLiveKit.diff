@@ -1,0 +1,1021 @@
+diff --git a/quickstart/src/browser.js b/quickstart/src/browser.js
+index 26e9b31..0e4ccfa 100644
+--- a/quickstart/src/browser.js
++++ b/quickstart/src/browser.js
+@@ -1,4 +1,6 @@
+-'use strict';
++// @ts-check
++
++"use strict";
+ 
+ /**
+  * Add URL parameters to the web app URL.
+@@ -8,8 +10,8 @@ function addUrlParams(params) {
+   const combinedParams = Object.assign(getUrlParams(), params);
+   const serializedParams = Object.entries(combinedParams)
+     .map(([name, value]) => `${name}=${encodeURIComponent(value)}`)
+-    .join('&');
+-  history.pushState(null, '', `${location.pathname}?${serializedParams}`);
++    .join("&");
++  history.pushState(null, "", `${location.pathname}?${serializedParams}`);
+ }
+ 
+ /**
+@@ -17,10 +19,10 @@ function addUrlParams(params) {
+  * @returns {*}
+  */
+ function getUrlParams() {
+-  const serializedParams = location.search.split('?')[1];
+-  const nvpairs = serializedParams ? serializedParams.split('&') : [];
++  const serializedParams = location.search.split("?")[1];
++  const nvpairs = serializedParams ? serializedParams.split("&") : [];
+   return nvpairs.reduce((params, nvpair) => {
+-    const [name, value] = nvpair.split('=');
++    const [name, value] = nvpair.split("=");
+     params[name] = decodeURIComponent(value);
+     return params;
+   }, {});
+@@ -31,7 +33,10 @@ function getUrlParams() {
+  * @type {boolean}
+  */
+ const isMobile = (() => {
+-  if (typeof navigator === 'undefined' || typeof navigator.userAgent !== 'string') {
++  if (
++    typeof navigator === "undefined" ||
++    typeof navigator.userAgent !== "string"
++  ) {
+     return false;
+   }
+   return /Mobile/.test(navigator.userAgent);
+@@ -40,5 +45,5 @@ const isMobile = (() => {
+ module.exports = {
+   addUrlParams,
+   getUrlParams,
+-  isMobile
++  isMobile,
+ };
+diff --git a/quickstart/src/index.js b/quickstart/src/index.js
+index 1c11121..e0d3a36 100644
+--- a/quickstart/src/index.js
++++ b/quickstart/src/index.js
+@@ -1,58 +1,33 @@
+-'use strict';
+-
+-const { isSupported } = require('twilio-video');
+-
+-const { isMobile } = require('./browser');
+-const joinRoom = require('./joinroom');
+-const micLevel = require('./miclevel');
+-const selectMedia = require('./selectmedia');
+-const selectRoom = require('./selectroom');
+-const showError = require('./showerror');
+-
+-const $modals = $('#modals');
+-const $selectMicModal = $('#select-mic', $modals);
+-const $selectCameraModal = $('#select-camera', $modals);
+-const $showErrorModal = $('#show-error', $modals);
+-const $joinRoomModal = $('#join-room', $modals);
+-
+-// ConnectOptions settings for a video web application.
+-const connectOptions = {
+-  // Available only in Small Group or Group Rooms only. Please set "Room Type"
+-  // to "Group" or "Small Group" in your Twilio Console:
+-  // https://www.twilio.com/console/video/configure
+-  bandwidthProfile: {
+-    video: {
+-      dominantSpeakerPriority: 'high',
+-      mode: 'collaboration',
+-      clientTrackSwitchOffControl: 'auto',
+-      contentPreferencesMode: 'auto'
+-    }
+-  },
++// @ts-check
+ 
+-  // Available only in Small Group or Group Rooms only. Please set "Room Type"
+-  // to "Group" or "Small Group" in your Twilio Console:
+-  // https://www.twilio.com/console/video/configure
+-  dominantSpeaker: true,
++"use strict";
+ 
+-  // Comment this line if you are playing music.
+-  maxAudioBitrate: 16000,
++const { VideoPresets } = require("livekit-client");
++const { isMobile } = require("./browser");
++const joinRoom = require("./joinroom");
++const micLevel = require("./miclevel");
++const selectMedia = require("./selectmedia");
++const selectRoom = require("./selectroom");
++const showError = require("./showerror");
+ 
+-  // VP8 simulcast enables the media server in a Small Group or Group Room
+-  // to adapt your encoded video quality for each RemoteParticipant based on
+-  // their individual bandwidth constraints. This has no utility if you are
+-  // using Peer-to-Peer Rooms, so you can comment this line.
+-  preferredVideoCodecs: [{ codec: 'VP8', simulcast: true }],
++const $modals = $("#modals");
++const $selectMicModal = $("#select-mic", $modals);
++const $selectCameraModal = $("#select-camera", $modals);
++const $showErrorModal = $("#show-error", $modals);
++const $joinRoomModal = $("#join-room", $modals);
+ 
+-  // Capture 720p video @ 24 fps.
+-  video: { height: 720, frameRate: 24, width: 1280 }
++/**
++ * @type {import('livekit-client').RoomOptions}
++ */
++const options = {
++  publishDefaults: {
++    videoEncoding: VideoPresets.h720.encoding,
++  },
+ };
+ 
+ // For mobile browsers, limit the maximum incoming video bitrate to 2.5 Mbps.
+-if (isMobile) {
+-  connectOptions
+-    .bandwidthProfile
+-    .video
+-    .maxSubscriptionBitrate = 2500000;
++if (isMobile && options.publishDefaults) {
++  options.publishDefaults.videoEncoding = VideoPresets.h540.encoding;
+ }
+ 
+ // On mobile browsers, there is the possibility of not getting any media even
+@@ -61,8 +36,12 @@ if (isMobile) {
+ // joining the Room. For more best practices, please refer to the following guide:
+ // https://www.twilio.com/docs/video/build-js-video-application-recommendations-and-best-practices
+ const deviceIds = {
+-  audio: isMobile ? null : localStorage.getItem('audioDeviceId'),
+-  video: isMobile ? null : localStorage.getItem('videoDeviceId')
++  audio: isMobile
++    ? undefined
++    : localStorage.getItem("audioDeviceId") ?? undefined,
++  video: isMobile
++    ? undefined
++    : localStorage.getItem("videoDeviceId") ?? undefined,
+ };
+ 
+ /**
+@@ -70,38 +49,41 @@ const deviceIds = {
+  * @param [error=null] - Error from the previous Room session, if any
+  */
+ async function selectAndJoinRoom(error = null) {
++  console.log("select and join room");
+   const formData = await selectRoom($joinRoomModal, error);
+   if (!formData) {
+     // User wants to change the camera and microphone.
+     // So, show them the microphone selection modal.
+-    deviceIds.audio = null;
+-    deviceIds.video = null;
++    deviceIds.audio = undefined;
++    deviceIds.video = undefined;
+     return selectMicrophone();
+   }
+   const { identity, roomName } = formData;
+ 
+   try {
+     // Fetch an AccessToken to join the Room.
+-    const response = await fetch(`/token?identity=${identity}`);
++    const response = await fetch(
++      `/token?identity=${identity}&room=${roomName}`
++    );
+ 
+     // Extract the AccessToken from the Response.
+-    const token = await response.text();
++    const { livekitUrl, token } = await response.json();
+ 
+     // Add the specified audio device ID to ConnectOptions.
+-    connectOptions.audio = { deviceId: { exact: deviceIds.audio } };
+-
+-    // Add the specified Room name to ConnectOptions.
+-    connectOptions.name = roomName;
++    options.audioCaptureDefaults = { deviceId: deviceIds.audio };
+ 
+     // Add the specified video device ID to ConnectOptions.
+-    connectOptions.video.deviceId = { exact: deviceIds.video };
++    options.videoCaptureDefaults = { deviceId: deviceIds.video };
++
++    console.log("joining room", { livekitUrl, token, options });
+ 
+     // Join the Room.
+-    await joinRoom(token, connectOptions);
++    await joinRoom(livekitUrl, token, options);
+ 
+     // After the video session, display the room selection modal.
+     return selectAndJoinRoom();
+   } catch (error) {
++    console.error(error);
+     return selectAndJoinRoom(error);
+   }
+ }
+@@ -110,13 +92,20 @@ async function selectAndJoinRoom(error = null) {
+  * Select your camera.
+  */
+ async function selectCamera() {
++  console.log("select camera");
++
+   if (deviceIds.video === null) {
+     try {
+-      deviceIds.video = await selectMedia('video', $selectCameraModal, videoTrack => {
+-        const $video = $('video', $selectCameraModal);
+-        videoTrack.attach($video.get(0))
+-      });
++      deviceIds.video = await selectMedia(
++        "video",
++        $selectCameraModal,
++        (videoTrack) => {
++          const $video = $("video", $selectCameraModal);
++          videoTrack.attach($video.get(0));
++        }
++      );
+     } catch (error) {
++      console.log("error", error);
+       showError($showErrorModal, error);
+       return;
+     }
+@@ -128,14 +117,23 @@ async function selectCamera() {
+  * Select your microphone.
+  */
+ async function selectMicrophone() {
++  console.log("select microphone");
+   if (deviceIds.audio === null) {
+     try {
+-      deviceIds.audio = await selectMedia('audio', $selectMicModal, audioTrack => {
+-        const $levelIndicator = $('svg rect', $selectMicModal);
+-        const maxLevel = Number($levelIndicator.attr('height'));
+-        micLevel(audioTrack, maxLevel, level => $levelIndicator.attr('y', maxLevel - level));
+-      });
++      deviceIds.audio = await selectMedia(
++        "audio",
++        $selectMicModal,
++        (audioTrack) => {
++          const $levelIndicator = $("svg rect", $selectMicModal);
++          const maxLevel = Number($levelIndicator.attr("height"));
++          micLevel(audioTrack, maxLevel, (level) =>
++            $levelIndicator.attr("y", maxLevel - level)
++          );
++        }
++      );
+     } catch (error) {
++      console.log("error", error);
++
+       showError($showErrorModal, error);
+       return;
+     }
+@@ -143,8 +141,4 @@ async function selectMicrophone() {
+   return selectCamera();
+ }
+ 
+-// If the current browser is not supported by twilio-video.js, show an error
+-// message. Otherwise, start the application.
+-window.addEventListener('load', isSupported ? selectMicrophone : () => {
+-  showError($showErrorModal, new Error('This browser is not supported.'));
+-});
++window.addEventListener("load", () => selectMicrophone());
+diff --git a/quickstart/src/joinroom.js b/quickstart/src/joinroom.js
+index 080ddf7..613aaac 100644
+--- a/quickstart/src/joinroom.js
++++ b/quickstart/src/joinroom.js
+@@ -1,13 +1,17 @@
+-'use strict';
++// @ts-check
++"use strict";
+ 
+-const { connect, createLocalVideoTrack, Logger } = require('twilio-video');
+-const { isMobile } = require('./browser');
++const { Room, setLogLevel } = require("livekit-client");
++const { Track } = require("livekit-client");
+ 
+-const $leave = $('#leave-room');
+-const $room = $('#room');
+-const $activeParticipant = $('div#active-participant > div.participant.main', $room);
+-const $activeVideo = $('video', $activeParticipant);
+-const $participants = $('div#participants', $room);
++const $leave = $("#leave-room");
++const $room = $("#room");
++const $activeParticipant = $(
++  "div#active-participant > div.participant.main",
++  $room
++);
++const $activeVideo = $("video", $activeParticipant);
++const $participants = $("div#participants", $room);
+ 
+ // The current active Participant in the Room.
+ let activeParticipant = null;
+@@ -23,14 +27,15 @@ let isActiveParticipantPinned = false;
+ function setActiveParticipant(participant) {
+   if (activeParticipant) {
+     const $activeParticipant = $(`div#${activeParticipant.sid}`, $participants);
+-    $activeParticipant.removeClass('active');
+-    $activeParticipant.removeClass('pinned');
++    $activeParticipant.removeClass("active");
++    $activeParticipant.removeClass("pinned");
+ 
+     // Detach any existing VideoTrack of the active Participant.
+-    const { track: activeTrack } = Array.from(activeParticipant.videoTracks.values())[0] || {};
++    const { track: activeTrack } =
++      Array.from(activeParticipant.videoTracks.values())[0] || {};
+     if (activeTrack) {
+       activeTrack.detach($activeVideo.get(0));
+-      $activeVideo.css('opacity', '0');
++      $activeVideo.css("opacity", "0");
+     }
+   }
+ 
+@@ -39,20 +44,20 @@ function setActiveParticipant(participant) {
+   const { identity, sid } = participant;
+   const $participant = $(`div#${sid}`, $participants);
+ 
+-  $participant.addClass('active');
++  $participant.addClass("active");
+   if (isActiveParticipantPinned) {
+-    $participant.addClass('pinned');
++    $participant.addClass("pinned");
+   }
+ 
+   // Attach the new active Participant's video.
+   const { track } = Array.from(participant.videoTracks.values())[0] || {};
+   if (track) {
+     track.attach($activeVideo.get(0));
+-    $activeVideo.css('opacity', '');
++    $activeVideo.css("opacity", "");
+   }
+ 
+   // Set the new active Participant's identity
+-  $activeParticipant.attr('data-identity', identity);
++  $activeParticipant.attr("data-identity", identity);
+ }
+ 
+ /**
+@@ -73,13 +78,16 @@ function setupParticipantContainer(participant, room) {
+   const { identity, sid } = participant;
+ 
+   // Add a container for the Participant's media.
+-  const $container = $(`<div class="participant" data-identity="${identity}" id="${sid}">
+-    <audio autoplay ${participant === room.localParticipant ? 'muted' : ''} style="opacity: 0"></audio>
++  const $container =
++    $(`<div class="participant" data-identity="${identity}" id="${sid}">
++    <audio autoplay ${
++      participant === room.localParticipant ? "muted" : ""
++    } style="opacity: 0"></audio>
+     <video autoplay muted playsinline style="opacity: 0"></video>
+   </div>`);
+ 
+   // Toggle the pinning of the active Participant's video.
+-  $container.on('click', () => {
++  $container.on("click", () => {
+     if (activeParticipant === participant && isActiveParticipantPinned) {
+       // Unpin the RemoteParticipant and update the current active Participant.
+       setVideoPriority(participant, null);
+@@ -90,7 +98,7 @@ function setupParticipantContainer(participant, room) {
+       if (isActiveParticipantPinned) {
+         setVideoPriority(activeParticipant, null);
+       }
+-      setVideoPriority(participant, 'high');
++      setVideoPriority(participant, "high");
+       isActiveParticipantPinned = true;
+       setActiveParticipant(participant);
+     }
+@@ -107,7 +115,7 @@ function setupParticipantContainer(participant, room) {
+  * @param priority - null | 'low' | 'standard' | 'high'
+  */
+ function setVideoPriority(participant, priority) {
+-  participant.videoTracks.forEach(publication => {
++  participant.videoTracks.forEach((publication) => {
+     const track = publication.track;
+     if (track && track.setPriority) {
+       track.setPriority(priority);
+@@ -117,20 +125,20 @@ function setVideoPriority(participant, priority) {
+ 
+ /**
+  * Attach a Track to the DOM.
+- * @param track - the Track to attach
+- * @param participant - the Participant which published the Track
++ * @param {import('livekit-client').Track} track - the Track to attach
++ * @param {import('livekit-client').Participant} participant - the Participant which published the Track
+  */
+ function attachTrack(track, participant) {
+   // Attach the Participant's Track to the thumbnail.
+   const $media = $(`div#${participant.sid} > ${track.kind}`, $participants);
+-  $media.css('opacity', '');
++  $media.css("opacity", "");
+   track.attach($media.get(0));
+ 
+   // If the attached Track is a VideoTrack that is published by the active
+   // Participant, then attach it to the main video as well.
+-  if (track.kind === 'video' && participant === activeParticipant) {
++  if (track.kind === "video" && participant === activeParticipant) {
+     track.attach($activeVideo.get(0));
+-    $activeVideo.css('opacity', '');
++    $activeVideo.css("opacity", "");
+   }
+ }
+ 
+@@ -143,17 +151,15 @@ function detachTrack(track, participant) {
+   // Detach the Participant's Track from the thumbnail.
+   const $media = $(`div#${participant.sid} > ${track.kind}`, $participants);
+   const mediaEl = $media.get(0);
+-  $media.css('opacity', '0');
++  $media.css("opacity", "0");
+   track.detach(mediaEl);
+-  mediaEl.srcObject = null;
+ 
+   // If the detached Track is a VideoTrack that is published by the active
+   // Participant, then detach it from the main video as well.
+-  if (track.kind === 'video' && participant === activeParticipant) {
++  if (track.kind === "video" && participant === activeParticipant) {
+     const activeVideoEl = $activeVideo.get(0);
+     track.detach(activeVideoEl);
+-    activeVideoEl.srcObject = null;
+-    $activeVideo.css('opacity', '0');
++    $activeVideo.css("opacity", "0");
+   }
+ }
+ 
+@@ -167,12 +173,12 @@ function participantConnected(participant, room) {
+   setupParticipantContainer(participant, room);
+ 
+   // Handle the TrackPublications already published by the Participant.
+-  participant.tracks.forEach(publication => {
++  participant.tracks.forEach((publication) => {
+     trackPublished(publication, participant);
+   });
+ 
+   // Handle theTrackPublications that will be published by the Participant later.
+-  participant.on('trackPublished', publication => {
++  participant.on("trackPublished", (publication) => {
+     trackPublished(publication, participant);
+   });
+ }
+@@ -206,12 +212,12 @@ function trackPublished(publication, participant) {
+   }
+ 
+   // Once the TrackPublication is subscribed to, attach the Track to the DOM.
+-  publication.on('subscribed', track => {
++  publication.on("subscribed", (track) => {
+     attachTrack(track, participant);
+   });
+ 
+   // Once the TrackPublication is unsubscribed from, detach the Track from the DOM.
+-  publication.on('unsubscribed', track => {
++  publication.on("unsubscribed", (track) => {
+     detachTrack(track, participant);
+   });
+ }
+@@ -221,35 +227,36 @@ function trackPublished(publication, participant) {
+  * @param token - the AccessToken used to join a Room
+  * @param connectOptions - the ConnectOptions used to join a Room
+  */
+-async function joinRoom(token, connectOptions) {
++async function joinRoom(url, token, connectOptions) {
+   // Comment the next two lines to disable verbose logging.
+-  const logger = Logger.getLogger('twilio-video');
+-  logger.setLevel('debug');
++  setLogLevel("debug");
+ 
+   // Join to the Room with the given AccessToken and ConnectOptions.
+-  const room = await connect(token, connectOptions);
++  const room = new Room(connectOptions);
++  await room.connect(url, token);
++  await room.localParticipant.enableCameraAndMicrophone();
+ 
+   // Save the LocalVideoTrack.
+-  let localVideoTrack = Array.from(room.localParticipant.videoTracks.values())[0].track;
++  let localVideoTrack = room.localParticipant.getTrack(Track.Source.Camera);
+ 
+-  // Make the Room available in the JavaScript console for debugging.
++  // @ts-ignore Make the Room available in the JavaScript console for debugging.
+   window.room = room;
+ 
+   // Handle the LocalParticipant's media.
+   participantConnected(room.localParticipant, room);
+ 
+   // Subscribe to the media published by RemoteParticipants already in the Room.
+-  room.participants.forEach(participant => {
++  room.participants.forEach((participant) => {
+     participantConnected(participant, room);
+   });
+ 
+   // Subscribe to the media published by RemoteParticipants joining the Room later.
+-  room.on('participantConnected', participant => {
++  room.on("participantConnected", (participant) => {
+     participantConnected(participant, room);
+   });
+ 
+   // Handle a disconnected RemoteParticipant.
+-  room.on('participantDisconnected', participant => {
++  room.on("participantDisconnected", (participant) => {
+     participantDisconnected(participant, room);
+   });
+ 
+@@ -258,15 +265,15 @@ async function joinRoom(token, connectOptions) {
+ 
+   // Update the active Participant when changed, only if the user has not
+   // pinned any particular Participant as the active Participant.
+-  room.on('dominantSpeakerChanged', () => {
+-    if (!isActiveParticipantPinned) {
+-      setCurrentActiveParticipant(room);
+-    }
+-  });
++  // room.on(RoomEvent., () => {
++  //   if (!isActiveParticipantPinned) {
++  //     setCurrentActiveParticipant(room);
++  //   }
++  // });
+ 
+   // Leave the Room when the "Leave Room" button is clicked.
+   $leave.click(function onLeave() {
+-    $leave.off('click', onLeave);
++    $leave.off("click", onLeave);
+     room.disconnect();
+   });
+ 
+@@ -276,64 +283,11 @@ async function joinRoom(token, connectOptions) {
+       room.disconnect();
+     };
+ 
+-    if (isMobile) {
+-      // TODO(mmalavalli): investigate why "pagehide" is not working in iOS Safari.
+-      // In iOS Safari, "beforeunload" is not fired, so use "pagehide" instead.
+-      window.onpagehide = () => {
+-        room.disconnect();
+-      };
+-
+-      // On mobile browsers, use "visibilitychange" event to determine when
+-      // the app is backgrounded or foregrounded.
+-      document.onvisibilitychange = async () => {
+-        if (document.visibilityState === 'hidden') {
+-          // When the app is backgrounded, your app can no longer capture
+-          // video frames. So, stop and unpublish the LocalVideoTrack.
+-          localVideoTrack.stop();
+-          room.localParticipant.unpublishTrack(localVideoTrack);
+-        } else {
+-          // When the app is foregrounded, your app can now continue to
+-          // capture video frames. So, publish a new LocalVideoTrack.
+-          localVideoTrack = await createLocalVideoTrack(connectOptions.video);
+-          await room.localParticipant.publishTrack(localVideoTrack);
+-        }
+-      };
+-    }
+-
+-    room.once('disconnected', (room, error) => {
+-      // Clear the event handlers on document and window..
+-      window.onbeforeunload = null;
+-      if (isMobile) {
+-        window.onpagehide = null;
+-        document.onvisibilitychange = null;
+-      }
+-
+-      // Stop the LocalVideoTrack.
+-      localVideoTrack.stop();
+-
+-      // Handle the disconnected LocalParticipant.
+-      participantDisconnected(room.localParticipant, room);
+-
+-      // Handle the disconnected RemoteParticipants.
+-      room.participants.forEach(participant => {
+-        participantDisconnected(participant, room);
+-      });
+-
+-      // Clear the active Participant's video.
+-      $activeVideo.get(0).srcObject = null;
+-
+-      // Clear the Room reference used for debugging from the JavaScript console.
++    room.once("disconnected", () => {
++      // @ts-ignore Clear the Room reference used for debugging from the JavaScript console.
+       window.room = null;
+ 
+-      if (error) {
+-        // Reject the Promise with the TwilioError so that the Room selection
+-        // modal (plus the TwilioError message) can be displayed.
+-        reject(error);
+-      } else {
+-        // Resolve the Promise so that the Room selection modal can be
+-        // displayed.
+-        resolve();
+-      }
++      resolve(true);
+     });
+   });
+ }
+diff --git a/quickstart/src/miclevel.js b/quickstart/src/miclevel.js
+index e5e2e16..ff2413f 100644
+--- a/quickstart/src/miclevel.js
++++ b/quickstart/src/miclevel.js
+@@ -1,7 +1,8 @@
+-'use strict';
++// @ts-check
+ 
+-const AudioContext = window.AudioContext || window.webkitAudioContext;
+-const audioContext = AudioContext ? new AudioContext() : null;
++"use strict";
++
++const { createAudioAnalyser } = require("livekit-client");
+ 
+ /**
+  * Calculate the root mean square (RMS) of the given array.
+@@ -19,53 +20,36 @@ function rootMeanSquare(samples) {
+  * @param maxLevel - the calculated level should be in the range [0 - maxLevel]
+  * @param onLevel - called when the input level changes
+  */
+-module.exports = audioContext
+-  ? function micLevel(audioTrack, maxLevel, onLevel) {
+-      audioContext.resume().then(() => {
+-        let rafID;
+-
+-        const initializeAnalyser = () => {
+-          const analyser = audioContext.createAnalyser();
+-          analyser.fftSize = 1024;
+-          analyser.smoothingTimeConstant = 0.5;
+-
+-          const stream = new MediaStream([audioTrack.mediaStreamTrack]);
+-          const audioSource = audioContext.createMediaStreamSource(stream);
+-          const samples = new Uint8Array(analyser.frequencyBinCount);
+-
+-          audioSource.connect(analyser);
+-          startAnimation(analyser, samples);
+-        };
+-
+-        initializeAnalyser();
+-
+-        // We listen to when the Audio Track is started, and once it is,
+-        // the Analyser Node is restarted.
+-        audioTrack.on('started', initializeAnalyser);
+-
+-        let level = null;
+-
+-        function startAnimation(analyser, samples) {
+-          window.cancelAnimationFrame(rafID);
+-
+-          rafID = requestAnimationFrame(function checkLevel() {
+-            analyser.getByteFrequencyData(samples);
+-            const rms = rootMeanSquare(samples);
+-            const log2Rms = rms && Math.log2(rms);
+-            const newLevel = Math.ceil((maxLevel * log2Rms) / 8);
+-
+-            if (level !== newLevel) {
+-              level = newLevel;
+-              onLevel(level);
+-            }
+-
+-            rafID =  requestAnimationFrame(audioTrack.mediaStreamTrack.readyState === 'ended'
+-              ? () => onLevel(0)
+-              : checkLevel);
+-          });
+-        }
+-      });
+-    }
+-  : function notSupported() {
+-      // Do nothing.
+-    };
++module.exports = function micLevel(audioTrack, maxLevel, onLevel) {
++  const { analyser } = createAudioAnalyser(audioTrack, {
++    fftSize: 1024,
++    smoothingTimeConstant: 0.5,
++  });
++
++  startAnimation(analyser, new Uint8Array(analyser.frequencyBinCount));
++  let rafID = 0;
++
++  let level = null;
++
++  function startAnimation(analyser, samples) {
++    window.cancelAnimationFrame(rafID);
++
++    rafID = requestAnimationFrame(function checkLevel() {
++      analyser.getByteFrequencyData(samples);
++      const rms = rootMeanSquare(samples);
++      const log2Rms = rms && Math.log2(rms);
++      const newLevel = Math.ceil((maxLevel * log2Rms) / 8);
++
++      if (level !== newLevel) {
++        level = newLevel;
++        onLevel(level);
++      }
++
++      rafID = requestAnimationFrame(
++        audioTrack.mediaStreamTrack.readyState === "ended"
++          ? () => onLevel(0)
++          : checkLevel
++      );
++    });
++  }
++};
+diff --git a/quickstart/src/selectmedia.js b/quickstart/src/selectmedia.js
+index 463e6a6..8ded270 100644
+--- a/quickstart/src/selectmedia.js
++++ b/quickstart/src/selectmedia.js
+@@ -1,10 +1,12 @@
+-'use strict';
++// @ts-check
+ 
+-const { createLocalTracks } = require('twilio-video');
++"use strict";
++
++const { createLocalTracks, Room } = require("livekit-client");
+ 
+ const localTracks = {
+   audio: null,
+-  video: null
++  video: null,
+ };
+ 
+ /**
+@@ -34,8 +36,7 @@ async function applyInputDevice(kind, deviceId, render) {
+  * @returns {Promise<MediaDeviceInfo[]>} the list of media devices
+  */
+ async function getInputDevices(kind) {
+-  const devices = await navigator.mediaDevices.enumerateDevices();
+-  return devices.filter(device => device.kind === `${kind}input`);
++  return Room.getLocalDevices(kind);
+ }
+ 
+ /**
+@@ -46,12 +47,12 @@ async function getInputDevices(kind) {
+  * @returns {Promise<string>} the device ID of the selected media input
+  */
+ async function selectMedia(kind, $modal, render) {
+-  const $apply = $('button', $modal);
+-  const $inputDevices = $('select', $modal);
++  const $apply = $("button", $modal);
++  const $inputDevices = $("select", $modal);
+   const setDevice = () => applyInputDevice(kind, $inputDevices.val(), render);
+ 
+   // Get the list of available media input devices.
+-  let devices =  await getInputDevices(kind);
++  let devices = await getInputDevices(kind);
+ 
+   // Apply the default media input device.
+   await applyInputDevice(kind, devices[0].deviceId, render);
+@@ -64,28 +65,30 @@ async function selectMedia(kind, $modal, render) {
+   }
+ 
+   // Populate the modal with the list of available media input devices.
+-  $inputDevices.html(devices.map(({ deviceId, label }) => {
+-    return `<option value="${deviceId}">${label}</option>`;
+-  }));
++  $inputDevices.html(
++    devices.map(({ deviceId, label }) => {
++      return `<option value="${deviceId}">${label}</option>`;
++    })
++  );
+ 
+-  return new Promise(resolve => {
+-    $modal.on('shown.bs.modal', function onShow() {
+-      $modal.off('shown.bs.modal', onShow);
++  return new Promise((resolve) => {
++    $modal.on("shown.bs.modal", function onShow() {
++      $modal.off("shown.bs.modal", onShow);
+ 
+       // When the user selects a different media input device, apply it.
+       $inputDevices.change(setDevice);
+ 
+       // When the user clicks the "Apply" button, close the modal.
+       $apply.click(function onApply() {
+-        $inputDevices.off('change', setDevice);
+-        $apply.off('click', onApply);
+-        $modal.modal('hide');
++        $inputDevices.off("change", setDevice);
++        $apply.off("click", onApply);
++        $modal.modal("hide");
+       });
+     });
+ 
+     // When the modal is closed, save the device ID.
+-    $modal.on('hidden.bs.modal', function onHide() {
+-      $modal.off('hidden.bs.modal', onHide);
++    $modal.on("hidden.bs.modal", function onHide() {
++      $modal.off("hidden.bs.modal", onHide);
+ 
+       // Stop the LocalTrack, if present.
+       if (localTracks[kind]) {
+@@ -101,10 +104,10 @@ async function selectMedia(kind, $modal, render) {
+ 
+     // Show the modal.
+     $modal.modal({
+-      backdrop: 'static',
++      backdrop: "static",
+       focus: true,
+       keyboard: false,
+-      show: true
++      show: true,
+     });
+   });
+ }
+diff --git a/quickstart/src/selectroom.js b/quickstart/src/selectroom.js
+index 57a57c0..45d3019 100644
+--- a/quickstart/src/selectroom.js
++++ b/quickstart/src/selectroom.js
+@@ -1,7 +1,9 @@
+-'use strict';
++// @ts-check
+ 
+-const { addUrlParams, getUrlParams } = require('./browser');
+-const getUserFriendlyError = require('./userfriendlyerror');
++"use strict";
++
++const { addUrlParams, getUrlParams } = require("./browser");
++const getUserFriendlyError = require("./userfriendlyerror");
+ 
+ /**
+  * Select your Room name and identity (screen name).
+@@ -9,11 +11,11 @@ const getUserFriendlyError = require('./userfriendlyerror');
+  * @param error - Error from the previous Room session, if any
+  */
+ function selectRoom($modal, error) {
+-  const $alert = $('div.alert', $modal);
+-  const $changeMedia = $('button.btn-dark', $modal);
+-  const $identity = $('#screen-name', $modal);
+-  const $join = $('button.btn-primary', $modal);
+-  const $roomName = $('#room-name', $modal);
++  const $alert = $("div.alert", $modal);
++  const $changeMedia = $("button.btn-dark", $modal);
++  const $identity = $("#screen-name", $modal);
++  const $join = $("button.btn-primary", $modal);
++  const $roomName = $("#room-name", $modal);
+ 
+   // If Room name is provided as a URL parameter, pre-populate the Room name field.
+   const { roomName } = getUrlParams();
+@@ -22,26 +24,28 @@ function selectRoom($modal, error) {
+   }
+ 
+   // If any previously saved user name exists, pre-populate the user name field.
+-  const identity = localStorage.getItem('userName');
++  const identity = localStorage.getItem("userName");
+   if (identity) {
+     $identity.val(identity);
+   }
+ 
+   if (error) {
+-    $alert.html(`<h5>${error.name}${error.message
+-      ? `: ${error.message}`
+-      : ''}</h5>${getUserFriendlyError(error)}`);
+-    $alert.css('display', '');
++    $alert.html(
++      `<h5>${error.name}${
++        error.message ? `: ${error.message}` : ""
++      }</h5>${getUserFriendlyError(error)}`
++    );
++    $alert.css("display", "");
+   } else {
+-    $alert.css('display', 'none');
++    $alert.css("display", "none");
+   }
+ 
+-  return new Promise(resolve => {
+-    $modal.on('shown.bs.modal', function onShow() {
+-      $modal.off('shown.bs.modal', onShow);
++  return new Promise((resolve) => {
++    $modal.on("shown.bs.modal", function onShow() {
++      $modal.off("shown.bs.modal", onShow);
+       $changeMedia.click(function onChangeMedia() {
+-        $changeMedia.off('click', onChangeMedia);
+-        $modal.modal('hide');
++        $changeMedia.off("click", onChangeMedia);
++        $modal.modal("hide");
+         resolve(null);
+       });
+ 
+@@ -53,26 +57,26 @@ function selectRoom($modal, error) {
+           addUrlParams({ roomName });
+ 
+           // Save the user name.
+-          localStorage.setItem('userName', identity);
++          localStorage.setItem("userName", identity);
+ 
+-          $join.off('click', onJoin);
+-          $modal.modal('hide');
++          $join.off("click", onJoin);
++          $modal.modal("hide");
+         }
+       });
+     });
+ 
+-    $modal.on('hidden.bs.modal', function onHide() {
+-      $modal.off('hidden.bs.modal', onHide);
++    $modal.on("hidden.bs.modal", function onHide() {
++      $modal.off("hidden.bs.modal", onHide);
+       const identity = $identity.val();
+       const roomName = $roomName.val();
+       resolve({ identity, roomName });
+     });
+ 
+     $modal.modal({
+-      backdrop: 'static',
++      backdrop: "static",
+       focus: true,
+       keyboard: false,
+-      show: true
++      show: true,
+     });
+   });
+ }
+diff --git a/quickstart/src/showerror.js b/quickstart/src/showerror.js
+index f6d88b3..929e67d 100644
+--- a/quickstart/src/showerror.js
++++ b/quickstart/src/showerror.js
+@@ -1,6 +1,8 @@
+-'use strict';
++// @ts-check
+ 
+-const getUserFriendlyError = require('./userfriendlyerror');
++"use strict";
++
++const getUserFriendlyError = require("./userfriendlyerror");
+ 
+ /**
+  * Show the given error.
+@@ -9,17 +11,17 @@ const getUserFriendlyError = require('./userfriendlyerror');
+  */
+ function showError($modal, error) {
+   // Add the appropriate error message to the alert.
+-  $('div.alert', $modal).html(getUserFriendlyError(error));
++  $("div.alert", $modal).html(getUserFriendlyError(error));
+   $modal.modal({
+-    backdrop: 'static',
++    backdrop: "static",
+     focus: true,
+     keyboard: false,
+-    show: true
++    show: true,
+   });
+ 
+-  $('#show-error-label', $modal).text(`${error.name}${error.message
+-    ? `: ${error.message}`
+-    : ''}`);
++  $("#show-error-label", $modal).text(
++    `${error.name}${error.message ? `: ${error.message}` : ""}`
++  );
+ }
+ 
+ module.exports = showError;
+diff --git a/quickstart/src/userfriendlyerror.js b/quickstart/src/userfriendlyerror.js
+index b36e345..97493ee 100644
+--- a/quickstart/src/userfriendlyerror.js
++++ b/quickstart/src/userfriendlyerror.js
+@@ -1,30 +1,40 @@
+-'use strict';
++// @ts-check
++
++"use strict";
+ 
+ const USER_FRIENDLY_ERRORS = {
+   NotAllowedError: () => {
+-    return '<b>Causes: </b><br>1. The user has denied permission for your app to access the input device either by dismissing the permission dialog or clicking on the "deny" button.<br> 2. The user has denied permission for your app to access the input device in the browser settings.<br>'
+-    +'<br><b>Solutions: </b><br> 1. The user should reload your app and grant permission to access the input device.<br> 2. The user should allow access to the input device in the browser settings and then reload your app.';
++    return (
++      '<b>Causes: </b><br>1. The user has denied permission for your app to access the input device either by dismissing the permission dialog or clicking on the "deny" button.<br> 2. The user has denied permission for your app to access the input device in the browser settings.<br>' +
++      "<br><b>Solutions: </b><br> 1. The user should reload your app and grant permission to access the input device.<br> 2. The user should allow access to the input device in the browser settings and then reload your app."
++    );
+   },
+   NotFoundError: () => {
+-    return '<b>Cause: </b><br>1. The user has disabled the input device for the browser in the system settings.<br>2. The user\'s machine does not have such input device connected to it.<br>'
+-    +'<br><b>Solution</b><br>1. The user should enable the input device for the browser in the system settings<br>2. The user should have atleast one input device connected.';
++    return (
++      "<b>Cause: </b><br>1. The user has disabled the input device for the browser in the system settings.<br>2. The user's machine does not have such input device connected to it.<br>" +
++      "<br><b>Solution</b><br>1. The user should enable the input device for the browser in the system settings<br>2. The user should have atleast one input device connected."
++    );
+   },
+   NotReadableError: () => {
+-    return '<b>Cause: </b><br>The browser could not start media capture with the input device even after the user gave permission, probably because another app or tab has reserved the input device.<br>'
+-    +'<br><b>Solution: </b><br>The user should close all other apps and tabs that have reserved the input device and reload your app, or worst case, restart the browser.';
++    return (
++      "<b>Cause: </b><br>The browser could not start media capture with the input device even after the user gave permission, probably because another app or tab has reserved the input device.<br>" +
++      "<br><b>Solution: </b><br>The user should close all other apps and tabs that have reserved the input device and reload your app, or worst case, restart the browser."
++    );
+   },
+-  OverconstrainedError: error => {
+-    return error.constraint === 'deviceId'
+-      ? '<b>Cause: </b><br>Your saved microphone or camera is no longer available.<br><br><b>Solution: </b><br>Please make sure the input device is connected to the machine.'
+-      : '<b>Cause: </b><br>Could not satisfy the requested media constraints. One of the reasons '
+-        + 'could be that your saved microphone or camera is no longer available.<br><br><b>Solution: </b><br>Please make sure the input device is connected to the machine.';
++  OverconstrainedError: (error) => {
++    return error.constraint === "deviceId"
++      ? "<b>Cause: </b><br>Your saved microphone or camera is no longer available.<br><br><b>Solution: </b><br>Please make sure the input device is connected to the machine."
++      : "<b>Cause: </b><br>Could not satisfy the requested media constraints. One of the reasons " +
++          "could be that your saved microphone or camera is no longer available.<br><br><b>Solution: </b><br>Please make sure the input device is connected to the machine.";
+   },
+   TypeError: () => {
+-    return '<b>Cause: </b><br><code>navigator.mediaDevices</code> does not exist.<br>'
+-    + '<br><b>Solution: </b><br>If you\'re sure that the browser supports '
+-    + '<code>navigator.mediaDevices</code>, make sure your app is being served '
+-    + 'from a secure context (<code>localhost</code> or an <code>https</code> domain).';
+-  }
++    return (
++      "<b>Cause: </b><br><code>navigator.mediaDevices</code> does not exist.<br>" +
++      "<br><b>Solution: </b><br>If you're sure that the browser supports " +
++      "<code>navigator.mediaDevices</code>, make sure your app is being served " +
++      "from a secure context (<code>localhost</code> or an <code>https</code> domain)."
++    );
++  },
+ };
+ 
+ /**
+@@ -33,7 +43,7 @@ const USER_FRIENDLY_ERRORS = {
+  * @returns {string} the user friendly message
+  */
+ function getUserFriendlyError(error) {
+-  const errorName = [error.name, error.constructor.name].find(errorName => {
++  const errorName = [error.name, error.constructor.name].find((errorName) => {
+     return errorName in USER_FRIENDLY_ERRORS;
+   });
+   return errorName ? USER_FRIENDLY_ERRORS[errorName](error) : error.message;
