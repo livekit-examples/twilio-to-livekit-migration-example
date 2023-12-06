@@ -4,7 +4,7 @@ const { createLocalTracks, Room } = require('livekit-client');
 
 const localTracks = {
   audio: null,
-  video: null,
+  video: null
 };
 
 /**
@@ -69,7 +69,7 @@ async function selectMedia(kind, $modal, render) {
     })
   );
 
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     $modal.on('shown.bs.modal', function onShow() {
       $modal.off('shown.bs.modal', onShow);
 
@@ -105,7 +105,7 @@ async function selectMedia(kind, $modal, render) {
       backdrop: 'static',
       focus: true,
       keyboard: false,
-      show: true,
+      show: true
     });
   });
 }

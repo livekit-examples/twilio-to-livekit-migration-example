@@ -14,7 +14,7 @@ function showError($modal, error) {
     backdrop: 'static',
     focus: true,
     keyboard: false,
-    show: true,
+    show: true
   });
 
   $('#show-error-label', $modal).text(

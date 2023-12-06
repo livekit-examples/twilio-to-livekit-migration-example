@@ -19,7 +19,7 @@ const USER_FRIENDLY_ERRORS = {
       '<br><b>Solution: </b><br>The user should close all other apps and tabs that have reserved the input device and reload your app, or worst case, restart the browser.'
     );
   },
-  OverconstrainedError: (error) => {
+  OverconstrainedError: error => {
     return error.constraint === 'deviceId'
       ? '<b>Cause: </b><br>Your saved microphone or camera is no longer available.<br><br><b>Solution: </b><br>Please make sure the input device is connected to the machine.'
       : '<b>Cause: </b><br>Could not satisfy the requested media constraints. One of the reasons ' +
@@ -32,7 +32,7 @@ const USER_FRIENDLY_ERRORS = {
       '<code>navigator.mediaDevices</code>, make sure your app is being served ' +
       'from a secure context (<code>localhost</code> or an <code>https</code> domain).'
     );
-  },
+  }
 };
 
 /**
@@ -41,7 +41,7 @@ const USER_FRIENDLY_ERRORS = {
  * @returns {string} the user friendly message
  */
 function getUserFriendlyError(error) {
-  const errorName = [error.name, error.constructor.name].find((errorName) => {
+  const errorName = [error.name, error.constructor.name].find(errorName => {
     return errorName in USER_FRIENDLY_ERRORS;
   });
   return errorName ? USER_FRIENDLY_ERRORS[errorName](error) : error.message;

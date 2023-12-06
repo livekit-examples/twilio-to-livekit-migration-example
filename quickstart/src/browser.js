@@ -43,5 +43,5 @@ const isMobile = (() => {
 module.exports = {
   addUrlParams,
   getUrlParams,
-  isMobile,
+  isMobile
 };

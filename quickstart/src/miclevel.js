@@ -23,7 +23,7 @@ function rootMeanSquare(samples) {
 module.exports = function micLevel(audioTrack, maxLevel, onLevel) {
   const { analyser } = createAudioAnalyser(audioTrack, {
     fftSize: 1024,
-    smoothingTimeConstant: 0.5,
+    smoothingTimeConstant: 0.5
   });
 
   startAnimation(analyser, new Uint8Array(analyser.frequencyBinCount));

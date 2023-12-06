@@ -114,7 +114,7 @@ function setupParticipantContainer(participant, room) {
  * @param priority - null | 'low' | 'standard' | 'high'
  */
 function setVideoPriority(participant, priority) {
-  participant.videoTracks.forEach((publication) => {
+  participant.videoTracks.forEach(publication => {
     const track = publication.track;
     if (track && track.setPriority) {
       track.setPriority(priority);
@@ -172,12 +172,12 @@ function participantConnected(participant, room) {
   setupParticipantContainer(participant, room);
 
   // Handle the TrackPublications already published by the Participant.
-  participant.tracks.forEach((publication) => {
+  participant.tracks.forEach(publication => {
     trackPublished(publication, participant);
   });
 
   // Handle theTrackPublications that will be published by the Participant later.
-  participant.on('trackPublished', (publication) => {
+  participant.on('trackPublished', publication => {
     trackPublished(publication, participant);
   });
 }
@@ -211,12 +211,12 @@ function trackPublished(publication, participant) {
   }
 
   // Once the TrackPublication is subscribed to, attach the Track to the DOM.
-  publication.on('subscribed', (track) => {
+  publication.on('subscribed', track => {
     attachTrack(track, participant);
   });
 
   // Once the TrackPublication is unsubscribed from, detach the Track from the DOM.
-  publication.on('unsubscribed', (track) => {
+  publication.on('unsubscribed', track => {
     detachTrack(track, participant);
   });
 }
@@ -245,17 +245,17 @@ async function joinRoom(url, token, connectOptions) {
   participantConnected(room.localParticipant, room);
 
   // Subscribe to the media published by RemoteParticipants already in the Room.
-  room.participants.forEach((participant) => {
+  room.participants.forEach(participant => {
     participantConnected(participant, room);
   });
 
   // Subscribe to the media published by RemoteParticipants joining the Room later.
-  room.on('participantConnected', (participant) => {
+  room.on('participantConnected', participant => {
     participantConnected(participant, room);
   });
 
   // Handle a disconnected RemoteParticipant.
-  room.on('participantDisconnected', (participant) => {
+  room.on('participantDisconnected', participant => {
     participantDisconnected(participant, room);
   });
 

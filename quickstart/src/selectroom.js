@@ -38,7 +38,7 @@ function selectRoom($modal, error) {
     $alert.css('display', 'none');
   }
 
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     $modal.on('shown.bs.modal', function onShow() {
       $modal.off('shown.bs.modal', onShow);
       $changeMedia.click(function onChangeMedia() {
@@ -74,7 +74,7 @@ function selectRoom($modal, error) {
       backdrop: 'static',
       focus: true,
       keyboard: false,
-      show: true,
+      show: true
     });
   });
 }

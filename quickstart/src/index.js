@@ -19,8 +19,8 @@ const $joinRoomModal = $('#join-room', $modals);
  */
 const options = {
   publishDefaults: {
-    videoEncoding: VideoPresets.h720.encoding,
-  },
+    videoEncoding: VideoPresets.h720.encoding
+  }
 };
 
 // For mobile browsers, limit the maximum incoming video bitrate to 2.5 Mbps.
@@ -39,7 +39,7 @@ const deviceIds = {
     : localStorage.getItem('audioDeviceId') ?? undefined,
   video: isMobile
     ? undefined
-    : localStorage.getItem('videoDeviceId') ?? undefined,
+    : localStorage.getItem('videoDeviceId') ?? undefined
 };
 
 /**
@@ -92,7 +92,7 @@ async function selectCamera() {
       deviceIds.video = await selectMedia(
         'video',
         $selectCameraModal,
-        (videoTrack) => {
+        videoTrack => {
           const $video = $('video', $selectCameraModal);
           videoTrack.attach($video.get(0));
         }
@@ -114,10 +114,10 @@ async function selectMicrophone() {
       deviceIds.audio = await selectMedia(
         'audio',
         $selectMicModal,
-        (audioTrack) => {
+        audioTrack => {
           const $levelIndicator = $('svg rect', $selectMicModal);
           const maxLevel = Number($levelIndicator.attr('height'));
-          micLevel(audioTrack, maxLevel, (level) =>
+          micLevel(audioTrack, maxLevel, level =>
             $levelIndicator.attr('y', maxLevel - level)
           );
         }
