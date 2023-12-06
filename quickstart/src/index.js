@@ -1,18 +1,18 @@
-"use strict";
+'use strict';
 
-const { VideoPresets } = require("livekit-client");
-const { isMobile } = require("./browser");
-const joinRoom = require("./joinroom");
-const micLevel = require("./miclevel");
-const selectMedia = require("./selectmedia");
-const selectRoom = require("./selectroom");
-const showError = require("./showerror");
+const { VideoPresets } = require('livekit-client');
+const { isMobile } = require('./browser');
+const joinRoom = require('./joinroom');
+const micLevel = require('./miclevel');
+const selectMedia = require('./selectmedia');
+const selectRoom = require('./selectroom');
+const showError = require('./showerror');
 
-const $modals = $("#modals");
-const $selectMicModal = $("#select-mic", $modals);
-const $selectCameraModal = $("#select-camera", $modals);
-const $showErrorModal = $("#show-error", $modals);
-const $joinRoomModal = $("#join-room", $modals);
+const $modals = $('#modals');
+const $selectMicModal = $('#select-mic', $modals);
+const $selectCameraModal = $('#select-camera', $modals);
+const $showErrorModal = $('#show-error', $modals);
+const $joinRoomModal = $('#join-room', $modals);
 
 /**
  * @type {import('livekit-client').RoomOptions}
@@ -36,10 +36,10 @@ if (isMobile && options.publishDefaults) {
 const deviceIds = {
   audio: isMobile
     ? undefined
-    : localStorage.getItem("audioDeviceId") ?? undefined,
+    : localStorage.getItem('audioDeviceId') ?? undefined,
   video: isMobile
     ? undefined
-    : localStorage.getItem("videoDeviceId") ?? undefined,
+    : localStorage.getItem('videoDeviceId') ?? undefined,
 };
 
 /**
@@ -90,10 +90,10 @@ async function selectCamera() {
   if (deviceIds.video === null) {
     try {
       deviceIds.video = await selectMedia(
-        "video",
+        'video',
         $selectCameraModal,
         (videoTrack) => {
-          const $video = $("video", $selectCameraModal);
+          const $video = $('video', $selectCameraModal);
           videoTrack.attach($video.get(0));
         }
       );
@@ -112,13 +112,13 @@ async function selectMicrophone() {
   if (deviceIds.audio === null) {
     try {
       deviceIds.audio = await selectMedia(
-        "audio",
+        'audio',
         $selectMicModal,
         (audioTrack) => {
-          const $levelIndicator = $("svg rect", $selectMicModal);
-          const maxLevel = Number($levelIndicator.attr("height"));
+          const $levelIndicator = $('svg rect', $selectMicModal);
+          const maxLevel = Number($levelIndicator.attr('height'));
           micLevel(audioTrack, maxLevel, (level) =>
-            $levelIndicator.attr("y", maxLevel - level)
+            $levelIndicator.attr('y', maxLevel - level)
           );
         }
       );
@@ -130,4 +130,4 @@ async function selectMicrophone() {
   return selectCamera();
 }
 
-window.addEventListener("load", () => selectMicrophone());
+window.addEventListener('load', () => selectMicrophone());

@@ -1,8 +1,8 @@
 // @ts-check
 
-"use strict";
+'use strict';
 
-const { createAudioAnalyser } = require("livekit-client");
+const { createAudioAnalyser } = require('livekit-client');
 
 /**
  * Calculate the root mean square (RMS) of the given array.
@@ -46,7 +46,7 @@ module.exports = function micLevel(audioTrack, maxLevel, onLevel) {
       }
 
       rafID = requestAnimationFrame(
-        audioTrack.mediaStreamTrack.readyState === "ended"
+        audioTrack.mediaStreamTrack.readyState === 'ended'
           ? () => onLevel(0)
           : checkLevel
       );

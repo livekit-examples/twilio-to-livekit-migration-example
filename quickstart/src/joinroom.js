@@ -1,16 +1,16 @@
-"use strict";
+'use strict';
 
-const { Room, setLogLevel } = require("livekit-client");
-const { Track } = require("livekit-client");
+const { Room, setLogLevel } = require('livekit-client');
+const { Track } = require('livekit-client');
 
-const $leave = $("#leave-room");
-const $room = $("#room");
+const $leave = $('#leave-room');
+const $room = $('#room');
 const $activeParticipant = $(
-  "div#active-participant > div.participant.main",
+  'div#active-participant > div.participant.main',
   $room
 );
-const $activeVideo = $("video", $activeParticipant);
-const $participants = $("div#participants", $room);
+const $activeVideo = $('video', $activeParticipant);
+const $participants = $('div#participants', $room);
 
 // The current active Participant in the Room.
 let activeParticipant = null;
@@ -26,15 +26,15 @@ let isActiveParticipantPinned = false;
 function setActiveParticipant(participant) {
   if (activeParticipant) {
     const $activeParticipant = $(`div#${activeParticipant.sid}`, $participants);
-    $activeParticipant.removeClass("active");
-    $activeParticipant.removeClass("pinned");
+    $activeParticipant.removeClass('active');
+    $activeParticipant.removeClass('pinned');
 
     // Detach any existing VideoTrack of the active Participant.
     const { track: activeTrack } =
       Array.from(activeParticipant.videoTracks.values())[0] || {};
     if (activeTrack) {
       activeTrack.detach($activeVideo.get(0));
-      $activeVideo.css("opacity", "0");
+      $activeVideo.css('opacity', '0');
     }
   }
 
@@ -43,20 +43,20 @@ function setActiveParticipant(participant) {
   const { identity, sid } = participant;
   const $participant = $(`div#${sid}`, $participants);
 
-  $participant.addClass("active");
+  $participant.addClass('active');
   if (isActiveParticipantPinned) {
-    $participant.addClass("pinned");
+    $participant.addClass('pinned');
   }
 
   // Attach the new active Participant's video.
   const { track } = Array.from(participant.videoTracks.values())[0] || {};
   if (track) {
     track.attach($activeVideo.get(0));
-    $activeVideo.css("opacity", "");
+    $activeVideo.css('opacity', '');
   }
 
   // Set the new active Participant's identity
-  $activeParticipant.attr("data-identity", identity);
+  $activeParticipant.attr('data-identity', identity);
 }
 
 /**
@@ -80,13 +80,13 @@ function setupParticipantContainer(participant, room) {
   const $container =
     $(`<div class="participant" data-identity="${identity}" id="${sid}">
     <audio autoplay ${
-      participant === room.localParticipant ? "muted" : ""
+      participant === room.localParticipant ? 'muted' : ''
     } style="opacity: 0"></audio>
     <video autoplay muted playsinline style="opacity: 0"></video>
   </div>`);
 
   // Toggle the pinning of the active Participant's video.
-  $container.on("click", () => {
+  $container.on('click', () => {
     if (activeParticipant === participant && isActiveParticipantPinned) {
       // Unpin the RemoteParticipant and update the current active Participant.
       setVideoPriority(participant, null);
@@ -97,7 +97,7 @@ function setupParticipantContainer(participant, room) {
       if (isActiveParticipantPinned) {
         setVideoPriority(activeParticipant, null);
       }
-      setVideoPriority(participant, "high");
+      setVideoPriority(participant, 'high');
       isActiveParticipantPinned = true;
       setActiveParticipant(participant);
     }
@@ -130,14 +130,14 @@ function setVideoPriority(participant, priority) {
 function attachTrack(track, participant) {
   // Attach the Participant's Track to the thumbnail.
   const $media = $(`div#${participant.sid} > ${track.kind}`, $participants);
-  $media.css("opacity", "");
+  $media.css('opacity', '');
   track.attach($media.get(0));
 
   // If the attached Track is a VideoTrack that is published by the active
   // Participant, then attach it to the main video as well.
-  if (track.kind === "video" && participant === activeParticipant) {
+  if (track.kind === 'video' && participant === activeParticipant) {
     track.attach($activeVideo.get(0));
-    $activeVideo.css("opacity", "");
+    $activeVideo.css('opacity', '');
   }
 }
 
@@ -150,15 +150,15 @@ function detachTrack(track, participant) {
   // Detach the Participant's Track from the thumbnail.
   const $media = $(`div#${participant.sid} > ${track.kind}`, $participants);
   const mediaEl = $media.get(0);
-  $media.css("opacity", "0");
+  $media.css('opacity', '0');
   track.detach(mediaEl);
 
   // If the detached Track is a VideoTrack that is published by the active
   // Participant, then detach it from the main video as well.
-  if (track.kind === "video" && participant === activeParticipant) {
+  if (track.kind === 'video' && participant === activeParticipant) {
     const activeVideoEl = $activeVideo.get(0);
     track.detach(activeVideoEl);
-    $activeVideo.css("opacity", "0");
+    $activeVideo.css('opacity', '0');
   }
 }
 
@@ -177,7 +177,7 @@ function participantConnected(participant, room) {
   });
 
   // Handle theTrackPublications that will be published by the Participant later.
-  participant.on("trackPublished", (publication) => {
+  participant.on('trackPublished', (publication) => {
     trackPublished(publication, participant);
   });
 }
@@ -211,12 +211,12 @@ function trackPublished(publication, participant) {
   }
 
   // Once the TrackPublication is subscribed to, attach the Track to the DOM.
-  publication.on("subscribed", (track) => {
+  publication.on('subscribed', (track) => {
     attachTrack(track, participant);
   });
 
   // Once the TrackPublication is unsubscribed from, detach the Track from the DOM.
-  publication.on("unsubscribed", (track) => {
+  publication.on('unsubscribed', (track) => {
     detachTrack(track, participant);
   });
 }
@@ -228,7 +228,7 @@ function trackPublished(publication, participant) {
  */
 async function joinRoom(url, token, connectOptions) {
   // Comment the next two lines to disable verbose logging.
-  setLogLevel("debug");
+  setLogLevel('debug');
 
   // Join to the Room with the given AccessToken and ConnectOptions.
   const room = new Room(connectOptions);
@@ -250,12 +250,12 @@ async function joinRoom(url, token, connectOptions) {
   });
 
   // Subscribe to the media published by RemoteParticipants joining the Room later.
-  room.on("participantConnected", (participant) => {
+  room.on('participantConnected', (participant) => {
     participantConnected(participant, room);
   });
 
   // Handle a disconnected RemoteParticipant.
-  room.on("participantDisconnected", (participant) => {
+  room.on('participantDisconnected', (participant) => {
     participantDisconnected(participant, room);
   });
 
@@ -272,7 +272,7 @@ async function joinRoom(url, token, connectOptions) {
 
   // Leave the Room when the "Leave Room" button is clicked.
   $leave.click(function onLeave() {
-    $leave.off("click", onLeave);
+    $leave.off('click', onLeave);
     room.disconnect();
   });
 
@@ -282,7 +282,7 @@ async function joinRoom(url, token, connectOptions) {
       room.disconnect();
     };
 
-    room.once("disconnected", () => {
+    room.once('disconnected', () => {
       // @ts-ignore Clear the Room reference used for debugging from the JavaScript console.
       window.room = null;
 
