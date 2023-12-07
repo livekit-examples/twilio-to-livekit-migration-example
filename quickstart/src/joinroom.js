@@ -257,12 +257,11 @@ async function joinRoom(url, token, connectOptions) {
 
   // Update the active Participant when changed, only if the user has not
   // pinned any particular Participant as the active Participant.
-  // room.on(RoomEvent., () => {
+  // room.on('dominantSpeakerChanged', () => {
   //   if (!isActiveParticipantPinned) {
   //     setCurrentActiveParticipant(room);
   //   }
-  // });
-
+  
   // Leave the Room when the "Leave Room" button is clicked.
   $leave.click(function onLeave() {
     $leave.off('click', onLeave);

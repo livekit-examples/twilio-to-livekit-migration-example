@@ -50,7 +50,7 @@ async function selectMedia(kind, $modal, render) {
   const setDevice = () => applyInputDevice(kind, $inputDevices.val(), render);
 
   // Get the list of available media input devices.
-  let devices = await getInputDevices(kind);
+  let devices =  await getInputDevices(kind);
 
   // Apply the default media input device.
   await applyInputDevice(kind, devices[0].deviceId, render);
@@ -63,11 +63,9 @@ async function selectMedia(kind, $modal, render) {
   }
 
   // Populate the modal with the list of available media input devices.
-  $inputDevices.html(
-    devices.map(({ deviceId, label }) => {
+  $inputDevices.html(devices.map(({ deviceId, label }) => {
       return `<option value="${deviceId}">${label}</option>`;
-    })
-  );
+  }));
 
   return new Promise(resolve => {
     $modal.on('shown.bs.modal', function onShow() {

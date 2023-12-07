@@ -1,5 +1,3 @@
-// @ts-check
-
 'use strict';
 
 const { createAudioAnalyser } = require('livekit-client');

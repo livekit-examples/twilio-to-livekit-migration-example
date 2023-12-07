@@ -34,12 +34,8 @@ if (isMobile && options.publishDefaults) {
 // joining the Room. For more best practices, please refer to the following guide:
 // https://www.twilio.com/docs/video/build-js-video-application-recommendations-and-best-practices
 const deviceIds = {
-  audio: isMobile
-    ? undefined
-    : localStorage.getItem('audioDeviceId') ?? undefined,
-  video: isMobile
-    ? undefined
-    : localStorage.getItem('videoDeviceId') ?? undefined
+  audio: isMobile ? undefined : localStorage.getItem('audioDeviceId') ?? undefined,
+  video: isMobile ? undefined : localStorage.getItem('videoDeviceId') ?? undefined
 };
 
 /**
@@ -59,9 +55,7 @@ async function selectAndJoinRoom(error = null) {
 
   try {
     // Fetch an AccessToken to join the Room.
-    const response = await fetch(
-      `/token?identity=${identity}&room=${roomName}`
-    );
+    const response = await fetch(`/token?identity=${identity}&room=${roomName}`);
 
     // Extract the AccessToken from the Response.
     const { livekitUrl, token } = await response.json();
@@ -89,8 +83,8 @@ async function selectCamera() {
   if (deviceIds.video === null) {
     try {
       deviceIds.video = await selectMedia('video', $selectCameraModal, videoTrack => {
-          const $video = $('video', $selectCameraModal);
-          videoTrack.attach($video.get(0));
+        const $video = $('video', $selectCameraModal);
+        videoTrack.attach($video.get(0));
       });
     } catch (error) {
       showError($showErrorModal, error);
@@ -107,9 +101,9 @@ async function selectMicrophone() {
   if (deviceIds.audio === null) {
     try {
       deviceIds.audio = await selectMedia('audio', $selectMicModal, audioTrack => {
-          const $levelIndicator = $('svg rect', $selectMicModal);
-          const maxLevel = Number($levelIndicator.attr('height'));
-          micLevel(audioTrack, maxLevel, level => $levelIndicator.attr('y', maxLevel - level));
+        const $levelIndicator = $('svg rect', $selectMicModal);
+        const maxLevel = Number($levelIndicator.attr('height'));
+        micLevel(audioTrack, maxLevel, level => $levelIndicator.attr('y', maxLevel - level));
       });
     } catch (error) {
       showError($showErrorModal, error);

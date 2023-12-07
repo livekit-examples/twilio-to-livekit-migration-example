@@ -31,10 +31,7 @@ function getUrlParams() {
  * @type {boolean}
  */
 const isMobile = (() => {
-  if (
-    typeof navigator === 'undefined' ||
-    typeof navigator.userAgent !== 'string'
-  ) {
+  if (typeof navigator === 'undefined' || typeof navigator.userAgent !== 'string') {
     return false;
   }
   return /Mobile/.test(navigator.userAgent);
