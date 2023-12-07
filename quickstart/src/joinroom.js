@@ -261,7 +261,7 @@ async function joinRoom(url, token, connectOptions) {
   //   if (!isActiveParticipantPinned) {
   //     setCurrentActiveParticipant(room);
   //   }
-  
+
   // Leave the Room when the "Leave Room" button is clicked.
   $leave.click(function onLeave() {
     $leave.off('click', onLeave);

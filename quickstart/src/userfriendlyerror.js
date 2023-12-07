@@ -3,15 +3,15 @@
 const USER_FRIENDLY_ERRORS = {
   NotAllowedError: () => {
     return '<b>Causes: </b><br>1. The user has denied permission for your app to access the input device either by dismissing the permission dialog or clicking on the "deny" button.<br> 2. The user has denied permission for your app to access the input device in the browser settings.<br>'
-      +'<br><b>Solutions: </b><br> 1. The user should reload your app and grant permission to access the input device.<br> 2. The user should allow access to the input device in the browser settings and then reload your app.';
+     +'<br><b>Solutions: </b><br> 1. The user should reload your app and grant permission to access the input device.<br> 2. The user should allow access to the input device in the browser settings and then reload your app.';
   },
   NotFoundError: () => {
     return '<b>Cause: </b><br>1. The user has disabled the input device for the browser in the system settings.<br>2. The user\'s machine does not have such input device connected to it.<br>'
-      +'<br><b>Solution</b><br>1. The user should enable the input device for the browser in the system settings<br>2. The user should have atleast one input device connected.';
+     +'<br><b>Solution</b><br>1. The user should enable the input device for the browser in the system settings<br>2. The user should have atleast one input device connected.';
   },
   NotReadableError: () => {
     return '<b>Cause: </b><br>The browser could not start media capture with the input device even after the user gave permission, probably because another app or tab has reserved the input device.<br>'
-      +'<br><b>Solution: </b><br>The user should close all other apps and tabs that have reserved the input device and reload your app, or worst case, restart the browser.';
+     +'<br><b>Solution: </b><br>The user should close all other apps and tabs that have reserved the input device and reload your app, or worst case, restart the browser.';
   },
   OverconstrainedError: error => {
     return error.constraint === 'deviceId'
@@ -21,9 +21,9 @@ const USER_FRIENDLY_ERRORS = {
   },
   TypeError: () => {
     return '<b>Cause: </b><br><code>navigator.mediaDevices</code> does not exist.<br>'
-      + '<br><b>Solution: </b><br>If you\'re sure that the browser supports '
-      + '<code>navigator.mediaDevices</code>, make sure your app is being served '
-      + 'from a secure context (<code>localhost</code> or an <code>https</code> domain).';
+     + '<br><b>Solution: </b><br>If you\'re sure that the browser supports '
+     + '<code>navigator.mediaDevices</code>, make sure your app is being served '
+     + 'from a secure context (<code>localhost</code> or an <code>https</code> domain).';
   }
 };
 
