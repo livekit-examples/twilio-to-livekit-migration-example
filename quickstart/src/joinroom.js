@@ -1,6 +1,6 @@
 'use strict';
 
-const { connect, createLocalVideoTrack, Logger } = require('twilio-video');
+const { Room, Track, setLogLevel } = require('livekit-client');
 const { isMobile } = require('./browser');
 
 const $leave = $('#leave-room');
@@ -117,8 +117,8 @@ function setVideoPriority(participant, priority) {
 
 /**
  * Attach a Track to the DOM.
- * @param track - the Track to attach
- * @param participant - the Participant which published the Track
+ * @param {import('livekit-client').Track} track - the Track to attach
+ * @param {import('livekit-client').Participant} participant - the Participant which published the Track
  */
 function attachTrack(track, participant) {
   // Attach the Participant's Track to the thumbnail.
@@ -145,14 +145,12 @@ function detachTrack(track, participant) {
   const mediaEl = $media.get(0);
   $media.css('opacity', '0');
   track.detach(mediaEl);
-  mediaEl.srcObject = null;
 
   // If the detached Track is a VideoTrack that is published by the active
   // Participant, then detach it from the main video as well.
   if (track.kind === 'video' && participant === activeParticipant) {
     const activeVideoEl = $activeVideo.get(0);
     track.detach(activeVideoEl);
-    activeVideoEl.srcObject = null;
     $activeVideo.css('opacity', '0');
   }
 }
@@ -221,16 +219,17 @@ function trackPublished(publication, participant) {
  * @param token - the AccessToken used to join a Room
  * @param connectOptions - the ConnectOptions used to join a Room
  */
-async function joinRoom(token, connectOptions) {
+async function joinRoom(url, token, connectOptions) {
   // Comment the next two lines to disable verbose logging.
-  const logger = Logger.getLogger('twilio-video');
-  logger.setLevel('debug');
+  setLogLevel('debug');
 
   // Join to the Room with the given AccessToken and ConnectOptions.
-  const room = await connect(token, connectOptions);
+  const room = new Room(connectOptions);
+  await room.connect(url, token);
+  await room.localParticipant.enableCameraAndMicrophone();
 
   // Save the LocalVideoTrack.
-  let localVideoTrack = Array.from(room.localParticipant.videoTracks.values())[0].track;
+  let localVideoTrack = room.localParticipant.getTrack(Track.Source.Camera);
 
   // Make the Room available in the JavaScript console for debugging.
   window.room = room;
@@ -258,11 +257,11 @@ async function joinRoom(token, connectOptions) {
 
   // Update the active Participant when changed, only if the user has not
   // pinned any particular Participant as the active Participant.
-  room.on('dominantSpeakerChanged', () => {
-    if (!isActiveParticipantPinned) {
-      setCurrentActiveParticipant(room);
-    }
-  });
+  // room.on('dominantSpeakerChanged', () => {
+  //   if (!isActiveParticipantPinned) {
+  //     setCurrentActiveParticipant(room);
+  //   }
+  // });
 
   // Leave the Room when the "Leave Room" button is clicked.
   $leave.click(function onLeave() {
@@ -276,64 +275,11 @@ async function joinRoom(token, connectOptions) {
       room.disconnect();
     };
 
-    if (isMobile) {
-      // TODO(mmalavalli): investigate why "pagehide" is not working in iOS Safari.
-      // In iOS Safari, "beforeunload" is not fired, so use "pagehide" instead.
-      window.onpagehide = () => {
-        room.disconnect();
-      };
-
-      // On mobile browsers, use "visibilitychange" event to determine when
-      // the app is backgrounded or foregrounded.
-      document.onvisibilitychange = async () => {
-        if (document.visibilityState === 'hidden') {
-          // When the app is backgrounded, your app can no longer capture
-          // video frames. So, stop and unpublish the LocalVideoTrack.
-          localVideoTrack.stop();
-          room.localParticipant.unpublishTrack(localVideoTrack);
-        } else {
-          // When the app is foregrounded, your app can now continue to
-          // capture video frames. So, publish a new LocalVideoTrack.
-          localVideoTrack = await createLocalVideoTrack(connectOptions.video);
-          await room.localParticipant.publishTrack(localVideoTrack);
-        }
-      };
-    }
-
-    room.once('disconnected', (room, error) => {
-      // Clear the event handlers on document and window..
-      window.onbeforeunload = null;
-      if (isMobile) {
-        window.onpagehide = null;
-        document.onvisibilitychange = null;
-      }
-
-      // Stop the LocalVideoTrack.
-      localVideoTrack.stop();
-
-      // Handle the disconnected LocalParticipant.
-      participantDisconnected(room.localParticipant, room);
-
-      // Handle the disconnected RemoteParticipants.
-      room.participants.forEach(participant => {
-        participantDisconnected(participant, room);
-      });
-
-      // Clear the active Participant's video.
-      $activeVideo.get(0).srcObject = null;
-
+    room.once('disconnected', () => {
       // Clear the Room reference used for debugging from the JavaScript console.
       window.room = null;
 
-      if (error) {
-        // Reject the Promise with the TwilioError so that the Room selection
-        // modal (plus the TwilioError message) can be displayed.
-        reject(error);
-      } else {
-        // Resolve the Promise so that the Room selection modal can be
-        // displayed.
-        resolve();
-      }
+      resolve(true);
     });
   });
 }

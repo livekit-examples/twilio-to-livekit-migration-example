@@ -1,7 +1,6 @@
 'use strict';
 
-const AudioContext = window.AudioContext || window.webkitAudioContext;
-const audioContext = AudioContext ? new AudioContext() : null;
+const { createAudioAnalyser } = require('livekit-client');
 
 /**
  * Calculate the root mean square (RMS) of the given array.
@@ -19,53 +18,36 @@ function rootMeanSquare(samples) {
  * @param maxLevel - the calculated level should be in the range [0 - maxLevel]
  * @param onLevel - called when the input level changes
  */
-module.exports = audioContext
-  ? function micLevel(audioTrack, maxLevel, onLevel) {
-      audioContext.resume().then(() => {
-        let rafID;
+module.exports = function micLevel(audioTrack, maxLevel, onLevel) {
+  const { analyser } = createAudioAnalyser(audioTrack, {
+    fftSize: 1024,
+    smoothingTimeConstant: 0.5
+  });
 
-        const initializeAnalyser = () => {
-          const analyser = audioContext.createAnalyser();
-          analyser.fftSize = 1024;
-          analyser.smoothingTimeConstant = 0.5;
+  startAnimation(analyser, new Uint8Array(analyser.frequencyBinCount));
+  let rafID = 0;
 
-          const stream = new MediaStream([audioTrack.mediaStreamTrack]);
-          const audioSource = audioContext.createMediaStreamSource(stream);
-          const samples = new Uint8Array(analyser.frequencyBinCount);
+  let level = null;
 
-          audioSource.connect(analyser);
-          startAnimation(analyser, samples);
-        };
+  function startAnimation(analyser, samples) {
+    window.cancelAnimationFrame(rafID);
 
-        initializeAnalyser();
+    rafID = requestAnimationFrame(function checkLevel() {
+      analyser.getByteFrequencyData(samples);
+      const rms = rootMeanSquare(samples);
+      const log2Rms = rms && Math.log2(rms);
+      const newLevel = Math.ceil((maxLevel * log2Rms) / 8);
 
-        // We listen to when the Audio Track is started, and once it is,
-        // the Analyser Node is restarted.
-        audioTrack.on('started', initializeAnalyser);
+      if (level !== newLevel) {
+        level = newLevel;
+        onLevel(level);
+      }
 
-        let level = null;
-
-        function startAnimation(analyser, samples) {
-          window.cancelAnimationFrame(rafID);
-
-          rafID = requestAnimationFrame(function checkLevel() {
-            analyser.getByteFrequencyData(samples);
-            const rms = rootMeanSquare(samples);
-            const log2Rms = rms && Math.log2(rms);
-            const newLevel = Math.ceil((maxLevel * log2Rms) / 8);
-
-            if (level !== newLevel) {
-              level = newLevel;
-              onLevel(level);
-            }
-
-            rafID =  requestAnimationFrame(audioTrack.mediaStreamTrack.readyState === 'ended'
-              ? () => onLevel(0)
-              : checkLevel);
-          });
-        }
-      });
-    }
-  : function notSupported() {
-      // Do nothing.
-    };
+      rafID = requestAnimationFrame(
+        audioTrack.mediaStreamTrack.readyState === 'ended'
+          ? () => onLevel(0)
+          : checkLevel
+      );
+    });
+  }
+};
