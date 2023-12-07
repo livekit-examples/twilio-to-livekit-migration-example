@@ -84,7 +84,7 @@ async function selectCamera() {
     try {
       deviceIds.video = await selectMedia('video', $selectCameraModal, videoTrack => {
         const $video = $('video', $selectCameraModal);
-        videoTrack.attach($video.get(0));
+        videoTrack.attach($video.get(0))
       });
     } catch (error) {
       showError($showErrorModal, error);

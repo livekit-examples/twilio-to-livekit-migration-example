@@ -64,7 +64,7 @@ async function selectMedia(kind, $modal, render) {
 
   // Populate the modal with the list of available media input devices.
   $inputDevices.html(devices.map(({ deviceId, label }) => {
-      return `<option value="${deviceId}">${label}</option>`;
+    return `<option value="${deviceId}">${label}</option>`;
   }));
 
   return new Promise(resolve => {

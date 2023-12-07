@@ -18,8 +18,8 @@ function showError($modal, error) {
   });
 
   $('#show-error-label', $modal).text(`${error.name}${error.message
-    ? `: ${error.message}` : ''}`
-  );
+    ? `: ${error.message}`
+    : ''}`);
 }
 
 module.exports = showError;
